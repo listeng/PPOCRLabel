@@ -273,7 +273,7 @@ class MainWindow(QMainWindow):
 
         #  ================== Key List  ==================
         if self.kie_mode:
-            self.keyList = UniqueLabelQListWidget()
+            self.keyList = UniqueLabelQListWidget(mainwindow=self)
 
             # set key list height
             key_list_height = int(QApplication.desktop().height() // 4)
@@ -2392,7 +2392,10 @@ class MainWindow(QMainWindow):
                     box.update({"key_cls": "None"})
                 self.existed_key_cls_set.add(box["key_cls"])
         if len(self.existed_key_cls_set) > 0:
-            for key_text in self.existed_key_cls_set:
+            # Sort the set and convert it to a list
+            sorted_key_cls = sorted(self.existed_key_cls_set, key=lambda x: x if x else '')
+
+            for key_text in sorted_key_cls:
                 if not self.keyList.findItemsByLabel(key_text):
                     item = self.keyList.createItemFromLabel(key_text)
                     self.keyList.addItem(item)
@@ -3499,20 +3502,33 @@ class MainWindow(QMainWindow):
                 "The program will automatically save once after confirming 5 images (default)"
             )
 
-    def change_box_key(self):
+    def updateSelectedShapeKeyCls(self, key_cls):
+        """Update the key_cls of the selected shape when a keyword is double-clicked"""
+        self.change_box_key(key_cls)
+
+    def change_box_key(self, key_cls=None):
         if not self.kie_mode:
             return
-        key_text, _ = self.keyDialog.popUp(self.key_previous_text)
+        if key_cls is None:
+            key_text, _ = self.keyDialog.popUp(self.key_previous_text)
+        else:
+            key_text = key_cls
+
         if key_text is None:
             return
         self.key_previous_text = key_text
         for shape in self.canvas.selectedShapes:
             shape.key_cls = key_text
             if not self.keyList.findItemsByLabel(key_text):
-                item = self.keyList.createItemFromLabel(key_text)
-                self.keyList.addItem(item)
-                rgb = self._get_rgb_by_label(key_text, self.kie_mode)
-                self.keyList.setItemLabel(item, key_text, rgb)
+                self.existed_key_cls_set.add(key_text)
+                sorted_key_cls = sorted(self.existed_key_cls_set, key=lambda x: x if x else '')
+
+                self.keyList.clear()
+                for key_text in sorted_key_cls:
+                    item = self.keyList.createItemFromLabel(key_text)
+                    self.keyList.addItem(item)
+                    rgb = self._get_rgb_by_label(key_text, self.kie_mode)
+                    self.keyList.setItemLabel(item, key_text, rgb)
 
             self._update_shape_color(shape)
             self.keyDialog.addLabelHistory(key_text)

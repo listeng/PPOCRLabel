@@ -3,7 +3,6 @@
 from PyQt5.QtCore import Qt, QSize
 from PyQt5 import QtWidgets
 
-
 class EscapableQListWidget(QtWidgets.QListWidget):
     def keyPressEvent(self, event):
         super(EscapableQListWidget, self).keyPressEvent(event)
@@ -12,6 +11,21 @@ class EscapableQListWidget(QtWidgets.QListWidget):
 
 
 class UniqueLabelQListWidget(EscapableQListWidget):
+    def __init__(self, parent=None, mainwindow=None):
+        super(UniqueLabelQListWidget, self).__init__(parent)
+        self.mainwindow = mainwindow  # Store reference to main window
+        self.itemDoubleClicked.connect(self.onItemDoubleClicked)
+        
+    def onItemDoubleClicked(self, item):
+        """Handle double click event on key list items"""
+        key_cls = item.data(Qt.UserRole)
+        
+        # Use mainwindow if provided, otherwise fall back to parent()
+        target = self.mainwindow if hasattr(self, 'mainwindow') and self.mainwindow else self.parent()
+        
+        if hasattr(target, 'updateSelectedShapeKeyCls'):
+            target.updateSelectedShapeKeyCls(key_cls)
+            
     def mousePressEvent(self, event):
         super(UniqueLabelQListWidget, self).mousePressEvent(event)
         if not self.indexAt(event.pos()).isValid():
