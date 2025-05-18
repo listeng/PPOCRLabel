@@ -1675,6 +1675,7 @@ class MainWindow(QMainWindow):
                 line_color=line_color,
                 key_cls=key_cls,
                 font_family=self.label_font_family,
+                kie_mode=self.kie_mode,  # 添加kie_mode参数
             )
             for x, y in points:
                 # Ensure the labels are within the bounds of the image. If not, fix them.

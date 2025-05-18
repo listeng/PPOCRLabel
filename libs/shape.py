@@ -15,7 +15,7 @@
 import math
 import sys
 
-from PyQt5.QtCore import QPointF
+from PyQt5.QtCore import QPointF, Qt
 from PyQt5.QtGui import QColor, QPen, QPainterPath, QFont
 from libs.utils import distance
 from ppocr.utils.logging import get_logger
@@ -44,7 +44,7 @@ class Shape(object):
     vertex_fill_color = DEFAULT_VERTEX_FILL_COLOR
     hvertex_fill_color = DEFAULT_HVERTEX_FILL_COLOR
     point_type = P_ROUND
-    point_size = 8
+    point_size = 4
     scale = 1.0
 
     def __init__(
@@ -56,6 +56,7 @@ class Shape(object):
         paintLabel=False,
         paintIdx=False,
         font_family=None,
+        kie_mode=False,
     ):
         self.label = label
         self.idx = None  # bbox order, only for table annotation
@@ -77,6 +78,7 @@ class Shape(object):
             self.MOVE_VERTEX: (1.5, self.P_SQUARE),
         }
         self.fontsize = 8
+        self.kie_mode = kie_mode
 
         self._closed = False
         self.font_family = font_family
@@ -143,7 +145,12 @@ class Shape(object):
             color = self.select_line_color if self.selected else self.line_color
             pen = QPen(color)
             # Try using integer sizes for smoother drawing(?)
-            # pen.setWidth(max(1, int(round(2.0 / self.scale))))
+            pen.setWidth(max(3, int(round(3.0 / self.scale))))  # 设置最小宽度为2
+            # 如果是O或None，使用虚线样式
+            if self.key_cls in ["O", "None"]:
+                pen.setStyle(Qt.DashLine)
+            else:
+                pen.setStyle(Qt.SolidLine)
             painter.setPen(pen)
 
             line_path = QPainterPath()
@@ -203,6 +210,23 @@ class Shape(object):
                     if min_y < MIN_Y_LABEL:
                         min_y += MIN_Y_LABEL
                     painter.drawText(int(min_x), int(min_y), text)
+
+            # 在KIE模式下，在边框右侧显示key_cls
+            if self.kie_mode and self.key_cls not in ["O", "None"]:
+                # 找到最右边的点
+                max_x = -sys.maxsize
+                max_y = -sys.maxsize
+                for point in self.points:
+                    max_x = max(max_x, point.x())
+                    max_y = max(max_y, point.y())
+                
+                if max_x != -sys.maxsize and max_y != -sys.maxsize:
+                    font = QFont()
+                    font.setPointSize(int(self.fontsize / 2))
+                    font.setBold(False)
+                    painter.setFont(font)
+                    # 在右侧绘制key_cls文本
+                    painter.drawText(int(max_x + 5), int(max_y), self.key_cls)
 
             if self.fill:
                 color = self.select_fill_color if self.selected else self.fill_color
