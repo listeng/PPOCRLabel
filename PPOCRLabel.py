@@ -197,8 +197,8 @@ class MainWindow(QMainWindow):
             "use_textline_orientation": True,
             "device": self.gpu,
             "lang": self.lang,
-            "text_detection_model_name": "PP-OCRv5_server_det",
-            "text_recognition_model_name": "PP-OCRv5_server_rec",
+            # "text_detection_model_name": "PP-OCRv5_server_det",
+            # "text_recognition_model_name": "PP-OCRv5_server_rec",
         }
 
         if det_model_dir is not None:
@@ -215,20 +215,21 @@ class MainWindow(QMainWindow):
         self.text_detector = TextDetection(
             model_name="PP-OCRv5_server_det", model_dir=det_model_dir, device=self.gpu
         )
-        self.table_ocr = PPStructureV3(
-            use_doc_orientation_classify=False,
-            use_doc_unwarping=False,
-            use_seal_recognition=False,
-            use_table_recognition=True,
-            use_formula_recognition=False,
-            use_chart_recognition=False,
-            use_region_detection=False,
-            device=self.gpu,
-        )
+        self.table_ocr = None
+        # PPStructureV3(
+        #     use_doc_orientation_classify=False,
+        #     use_doc_unwarping=False,
+        #     use_seal_recognition=False,
+        #     use_table_recognition=True,
+        #     use_formula_recognition=False,
+        #     use_chart_recognition=False,
+        #     use_region_detection=False,
+        #     device=self.gpu,
+        # )
 
         if os.path.exists("./data/paddle.png"):
             self.ocr.predict("./data/paddle.png")
-            self.table_ocr.predict("./data/paddle.png")
+            # self.table_ocr.predict("./data/paddle.png")
 
         # For loading all image under a directory
         self.mImgList = []
@@ -276,6 +277,7 @@ class MainWindow(QMainWindow):
         self.fileListWidget = QListWidget()
         self.fileListWidget.itemClicked.connect(self.fileitemDoubleClicked)
         self.fileListWidget.setIconSize(QSize(25, 25))
+        self.fileListWidget.setMaximumHeight(80)
         filelistLayout.addWidget(self.fileListWidget)
 
         fileListContainer = QWidget()
@@ -294,7 +296,7 @@ class MainWindow(QMainWindow):
             key_list_height = int(QApplication.desktop().height() // 4)
             if key_list_height < 50:
                 key_list_height = 50
-            self.keyList.setMaximumHeight(key_list_height)
+            # self.keyList.setMaximumHeight(key_list_height)
 
             self.keyListDockName = get_str("keyListTitle")
             self.keyListDock = QDockWidget(self.keyListDockName, self)
@@ -3378,16 +3380,16 @@ class MainWindow(QMainWindow):
             if choose_lang in ["ch", "en"]:
                 if hasattr(self, "table_ocr"):
                     del self.table_ocr
-                self.table_ocr = PPStructureV3(
-                    use_doc_orientation_classify=False,
-                    use_doc_unwarping=False,
-                    use_seal_recognition=False,
-                    use_table_recognition=True,
-                    use_formula_recognition=False,
-                    use_chart_recognition=False,
-                    use_region_detection=False,
-                    device=self.gpu,
-                )
+                # self.table_ocr = PPStructureV3(
+                #     use_doc_orientation_classify=False,
+                #     use_doc_unwarping=False,
+                #     use_seal_recognition=False,
+                #     use_table_recognition=True,
+                #     use_formula_recognition=False,
+                #     use_chart_recognition=False,
+                #     use_region_detection=False,
+                #     device=self.gpu,
+                # )
         else:
             logger.error("Invalid language selection")
         self.dialog.close()
@@ -3540,9 +3542,9 @@ class MainWindow(QMainWindow):
 
     def updateSelectedShapeKeyCls(self, key_cls):
         """Update the key_cls of the selected shape when a keyword is double-clicked"""
-        self.change_box_key(key_cls)
+        self.change_box_key(None, key_cls)
 
-    def change_box_key(self, key_cls=None):
+    def change_box_key(self, action=None, key_cls=None):
         if not self.kie_mode:
             return
         if key_cls is None:
